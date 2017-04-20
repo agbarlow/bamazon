@@ -14,9 +14,6 @@ var connection = mysql.createConnection({
   database: "Bamazon_db"
 });
 
-// connect to the mysql server and sql database
-
-
 
             
 var order = function() {
@@ -24,103 +21,66 @@ connection.connect(function(err) {
   if (err) throw err;
 });
 
+
 connection.query("SELECT * FROM products_DB", function(err, res) {
+	console.log("-----------------------------------");
   for (var i = 0; i < res.length; i++) {
-    console.log(res[i].item_id + " | " + res[i].product_name + res[i].price);
+    console.log(res[i].item_id + " | " + res[i].product_name + "   $" + res[i].price);
   }
-  console.log("-----------------------------------");
-});
-  
-  inquirer.prompt({
+   console.log("-----------------------------------");
+
+ 
+  inquirer.prompt([
+  {
   	type: 'input',
 	name: 'itemId',
-	message: 'Which Item ID would you like to purchase?',
-	validate: function (value) {
-            if (isNaN(value) === false) {
-                return true;
+	message: 'Which Item ID would you like to purchase? \n',
+	validate: function (data) {
+            if ((isNaN(data) === false) && (data <= res.length))  {
+              return true;
                 }
             }
-	}).then(function(answer) {
-    // based on their answer, either call the bid or the post functions
-console.log("yes");
+    },
+   {
+     type: 'input',
+     name: 'amount',
+     message: 'How many of would you like to buy? \n',
+     validate: function(data) {
+     		if (isNaN(data) === false) {
+                    return true;
+                }
+     
+     }
+    }		
+    
+    ]).then(function(data) {
+    // check to see if we have the quanity
+	
+	if (res[data.itemId-1].stock_quantity < data.amount) {
+	console.log("I'm sorry, we don't have that amount.");
+	process.exit ();
+	} else {
+	var grandTotal = data.amount * res[data.itemId-1].price;
+	var newQuantity = res[data.itemId-1].stock_quantity - data.amount
+	//console.log(newQuantity);
+	console.log("Total Cost: $" + grandTotal);
+	
+	connection.query("UPDATE products_DB SET ? WHERE ?", [{
+            stock_quantity: newQuantity,   
+           },
+           {
+           item_id: data.itemId,
+           }], function(err, res) {});
+	process.exit ();
+	}
+
+
 
   });
+})  
 };            
             
             
             
-            /*
-            
-            
-// function uses inquirer to prompt the user for what action they should take
-// based on their answer, either call the bidAction or the postAuction functions
-var start = function() {
-inquirer.prompt([
-{	
-	type: 'input',
-	name: 'itemName',
-	message: 'Which Item ID would you like to purchase?',
-	validate
-}
-  ]).then(function(user) 
-  { switch (user.prompt) 
-  {
-  case 'Post':
-  postAuction ()
-  break;
-  
-  case 'Bid':
-  bidAuction()
-  break;
- }
- }) 
-  
-  
-};
-
-
-
-var postAuction = function() {
-       inquirer.prompt([{
-           type: "input",
-           message: "Please enter the item name:\n",
-           name: "itemName"
-       }, {
-           type: "input",
-           message: "Please enter the category:\n",
-           name: "itemCategory"
-       }, {
-           type: "input",
-           message: "Please enter the starting bid:\n",
-           name: "itemStartingBid"
-       }]).then(function(data) {
-           console.log(data.itemName);
-           console.log(data.itemCategory);
-           console.log(data.itemStartingBid);
-           connection.query("INSERT INTO items SET ?", {
-               itemName: data.itemName,
-               itemCategory: data.itemCategory,
-               itemStartingBid: data.itemStartingBid
-           }, function(err, res) {});
-           console.log("success?");
-           inquirer.prompt([{
-               type: "list",
-               message: "Would you like to post again?",
-               choices: ["YES", "NO"],
-               name: "choice"
-           }]).then(function(data) {
-               if (data.choice === "YES") {
-                   postAuction();
-               } else {
-                   start();
-               }
-           });
-
-       });
-   }
-   
-   
-   */
-   
-   order ()
+order ()
    
